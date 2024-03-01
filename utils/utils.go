@@ -1,79 +1,78 @@
 package utils
 
 import (
-	"github.com/hbourgeot/goxcel/excel"
 	"strconv"
+
+	"github.com/hbourgeot/goxcel/excel"
 )
 
 var Meses = []string{"Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"}
 
-var Semanas = 52
-
-func getMonthDays(month string) int {
+func GetMonthDays(month string) int {
 	switch month {
-	case "Enero", "Marzo", "Mayo", "Julio", "Agosto", "Octubre", "Diciembre":
+	case "January", "March", "May", "July", "August", "October", "December":
 		return 31
-	case "Febrero":
+	case "February":
 		return 28
 	default:
 		return 30
 	}
 }
 
-func getMonthColumn(gasto bool, month string) string {
+func GetMonthColumn(gasto bool, month string) string {
 	if gasto {
 		switch month {
-		case "Enero":
+		case "January":
 			return "A"
-		case "Febrero":
+		case "February":
 			return "C"
-		case "Marzo":
+		case "March":
 			return "E"
-		case "Abril":
+		case "April":
 			return "G"
-		case "Mayo":
+		case "May":
 			return "I"
-		case "Junio":
+		case "June":
 			return "K"
-		case "Julio":
+		case "July":
 			return "M"
-		case "Agosto":
+		case "August":
 			return "O"
-		case "Septiembre":
+		case "September":
 			return "Q"
-		case "Octubre":
+		case "October":
 			return "S"
-		case "Noviembre":
+		case "November":
 			return "U"
-		case "Diciembre":
+		case "December":
 			return "W"
 		}
 	}
 
 	switch month {
-	case "Enero":
+	case "January":
 		return "B"
-	case "Febrero":
+	case "February":
 		return "D"
-	case "Marzo":
+	case "March":
 		return "F"
-	case "Abril":
+	case "April":
 		return "H"
-	case "Mayo":
+	case "May":
 		return "J"
-	case "Junio":
+	case "June":
 		return "L"
-	case "Julio":
+	case "July":
 		return "N"
-	case "Agosto":
+	case "August":
 		return "P"
-	case "Septiembre":
+	case "September":
 		return "R"
-	case "Octubre":
+	case "October":
 		return "T"
-	case "Noviembre":
+	case "November":
 		return "V"
-	case "Diciembre":
+	case "December":
 		return "X"
 	}
 
@@ -92,28 +91,15 @@ func LlenarGastosIngresos() {
 	excel.Meses = meses
 }
 
-func LlenarGastosIngresosSem() {
-	semanas := excel.GastosIngresosSem{}
-	for i := 1; i <= Semanas; i++ {
-		semana := map[string]any{}
-		str := strconv.Itoa(i)
-		gastos := []string{"A" + str, "C" + str, "E" + str, "G" + str, "I" + str, "K" + str, "M" + str}
-		ingresos := []string{"B" + str, "D" + str, "F" + str, "H" + str, "J" + str, "L" + str, "N" + str}
-
-		semana["Gastos"] = gastos
-		semana["Ingresos"] = ingresos
-		semanas[i] = semana
-	}
-
-	print(len(semanas))
-	excel.Semanas = semanas
-}
-
 func GetCells(gastos bool, month string) []string {
 	cells := []string{}
-	for i := 0; i < getMonthDays(month); i++ {
-		cells = append(cells, getMonthColumn(gastos, month)+strconv.Itoa(i+2))
+	for i := 0; i < GetMonthDays(month); i++ {
+		cells = append(cells, GetMonthColumn(gastos, month)+strconv.Itoa(i+2))
 	}
 
 	return cells
+}
+
+func GenerateCell(column string, row int, gasto bool) string {
+	return GetMonthColumn(gasto, column) + strconv.Itoa(row+2)
 }

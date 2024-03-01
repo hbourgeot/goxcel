@@ -1,7 +1,6 @@
 package excel
 
 type GastosIngresos map[string]map[string]any
-type GastosIngresosSem map[int]map[string]any
 
 var Meses GastosIngresos = GastosIngresos{
 	"Enero":      {"Gastos": []string{}, "Ingresos": []string{}, "AhorroTotal": ""},
@@ -17,7 +16,3 @@ var Meses GastosIngresos = GastosIngresos{
 	"Noviembre":  {"Gastos": []string{}, "Ingresos": []string{}, "AhorroTotal": ""},
 	"Diciembre":  {"Gastos": []string{}, "Ingresos": []string{}, "AhorroTotal": ""},
 }
-
-var Semanas GastosIngresosSem = GastosIngresosSem{}
-
-var SemanaAhorroTotal = "O"

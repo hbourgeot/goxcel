@@ -1,9 +1,10 @@
 package excel
 
 import (
-	"github.com/xuri/excelize/v2"
 	"io"
 	"os"
+
+	"github.com/xuri/excelize/v2"
 )
 
 type Goxcel struct {
