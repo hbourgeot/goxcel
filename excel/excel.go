@@ -10,21 +10,44 @@ import (
 type Goxcel struct {
 	FileName string
 	Template string
-	file     *excelize.File
+	File     *excelize.File
+}
+
+func (g *Goxcel) Open() (*excelize.File, error) {
+	file, err := excelize.OpenFile(g.FileName)
+	if err != nil {
+		return nil, err
+	}
+
+	return file, nil
+}
+
+func (g *Goxcel) CheckFile() error {
+	file, err := g.Open()
+	if err != nil {
+		return err
+	}
+
+	g.File = file
+	return nil
 }
 
 func (g *Goxcel) Save() error {
-	if g.file != nil {
-		return g.file.Save()
+	if g.File == nil {
+		if err := g.CheckFile(); err != nil {
+			return err
+		}
 	}
-	return nil // O considera retornar un error si file es nil
+	return g.File.Save()
 }
 
 func (g *Goxcel) SaveAs(filename string) error {
-	if g.file != nil {
-		return g.file.SaveAs(filename)
+	if g.File == nil {
+		if err := g.CheckFile(); err != nil {
+			return err
+		}
 	}
-	return nil // O considera retornar un error si file es nil
+	return g.File.SaveAs(filename)
 }
 
 func (g *Goxcel) CopyTemplate() error {
@@ -58,15 +81,21 @@ func (g *Goxcel) CopyTemplate() error {
 }
 
 func (g *Goxcel) SetCellValue(sheet, cell, value string) error {
-	if g.file != nil {
-		return g.file.SetCellValue(sheet, cell, value)
+	if g.File == nil {
+		if err := g.CheckFile(); err != nil {
+			return err
+		}
 	}
-	return nil // O considera retornar un error si file es nil
+
+	return g.File.SetCellValue(sheet, cell, value)
 }
 
 func (g *Goxcel) GetCellValue(sheet, cell string) (string, error) {
-	if g.file != nil {
-		return g.file.GetCellValue(sheet, cell)
+	if g.File == nil {
+		if err := g.CheckFile(); err != nil {
+			return "", err
+		}
 	}
-	return "", nil // O considera retornar un error si file es nil
+
+	return g.File.GetCellValue(sheet, cell)
 }

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/hbourgeot/goxcel/excel"
 	"github.com/hbourgeot/goxcel/utils"
 )
@@ -34,7 +35,9 @@ func NewRouter() *chi.Mux {
 }
 
 func (app *App) Mount() {
+	app.Router.Use(middleware.Logger)
+
 	app.Router.Post("/initGoxcel/{user}", app.initGoxcel)
-	app.Router.Post("/appendDay/{user}", app.appendDay)
+	app.Router.Post("/appendDay/{user}-{gasto}-{ingreso}", app.appendDay)
 	app.Router.Get("/getGasIng/{user}", app.getGastosIngresos)
 }

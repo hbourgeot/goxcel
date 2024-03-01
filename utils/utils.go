@@ -80,8 +80,9 @@ func GetMonthColumn(gasto bool, month string) string {
 }
 
 func LlenarGastosIngresos() {
-	meses := excel.GastosIngresos{}
+	meses := make(excel.GastosIngresos) // Initialize the map
 	for key, value := range excel.Meses {
+		meses[key] = make(map[string]any) // Initialize the inner map with type map[string]any
 		for secondKey := range value {
 			cells := GetCells(secondKey == "Gastos", key)
 			meses[key][secondKey] = cells
