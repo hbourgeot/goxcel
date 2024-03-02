@@ -6,11 +6,11 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-func TestGoxcel_Save(t *testing.T) {
+func TestGoxcel_Open(t *testing.T) {
 	type fields struct {
 		FileName string
 		Template string
-		file     *excelize.File
+		File     *excelize.File
 	}
 	tests := []struct {
 		name    string
@@ -24,7 +24,61 @@ func TestGoxcel_Save(t *testing.T) {
 			g := &Goxcel{
 				FileName: tt.fields.FileName,
 				Template: tt.fields.Template,
-				file:     tt.fields.file,
+				File:     tt.fields.File,
+			}
+			if err := g.Open(); (err != nil) != tt.wantErr {
+				t.Errorf("Goxcel.Open() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestGoxcel_CheckFile(t *testing.T) {
+	type fields struct {
+		FileName string
+		Template string
+		File     *excelize.File
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := &Goxcel{
+				FileName: tt.fields.FileName,
+				Template: tt.fields.Template,
+				File:     tt.fields.File,
+			}
+			if err := g.CheckFile(); (err != nil) != tt.wantErr {
+				t.Errorf("Goxcel.CheckFile() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestGoxcel_Save(t *testing.T) {
+	type fields struct {
+		FileName string
+		Template string
+		File     *excelize.File
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := &Goxcel{
+				FileName: tt.fields.FileName,
+				Template: tt.fields.Template,
+				File:     tt.fields.File,
 			}
 			if err := g.Save(); (err != nil) != tt.wantErr {
 				t.Errorf("Goxcel.Save() error = %v, wantErr %v", err, tt.wantErr)
@@ -37,7 +91,7 @@ func TestGoxcel_SaveAs(t *testing.T) {
 	type fields struct {
 		FileName string
 		Template string
-		file     *excelize.File
+		File     *excelize.File
 	}
 	type args struct {
 		filename string
@@ -55,7 +109,7 @@ func TestGoxcel_SaveAs(t *testing.T) {
 			g := &Goxcel{
 				FileName: tt.fields.FileName,
 				Template: tt.fields.Template,
-				file:     tt.fields.file,
+				File:     tt.fields.File,
 			}
 			if err := g.SaveAs(tt.args.filename); (err != nil) != tt.wantErr {
 				t.Errorf("Goxcel.SaveAs() error = %v, wantErr %v", err, tt.wantErr)
@@ -68,7 +122,7 @@ func TestGoxcel_CopyTemplate(t *testing.T) {
 	type fields struct {
 		FileName string
 		Template string
-		file     *excelize.File
+		File     *excelize.File
 	}
 	tests := []struct {
 		name    string
@@ -82,7 +136,7 @@ func TestGoxcel_CopyTemplate(t *testing.T) {
 			g := &Goxcel{
 				FileName: tt.fields.FileName,
 				Template: tt.fields.Template,
-				file:     tt.fields.file,
+				File:     tt.fields.File,
 			}
 			if err := g.CopyTemplate(); (err != nil) != tt.wantErr {
 				t.Errorf("Goxcel.CopyTemplate() error = %v, wantErr %v", err, tt.wantErr)
@@ -95,7 +149,7 @@ func TestGoxcel_SetCellValue(t *testing.T) {
 	type fields struct {
 		FileName string
 		Template string
-		file     *excelize.File
+		File     *excelize.File
 	}
 	type args struct {
 		sheet string
@@ -115,7 +169,7 @@ func TestGoxcel_SetCellValue(t *testing.T) {
 			g := &Goxcel{
 				FileName: tt.fields.FileName,
 				Template: tt.fields.Template,
-				file:     tt.fields.file,
+				File:     tt.fields.File,
 			}
 			if err := g.SetCellValue(tt.args.sheet, tt.args.cell, tt.args.value); (err != nil) != tt.wantErr {
 				t.Errorf("Goxcel.SetCellValue() error = %v, wantErr %v", err, tt.wantErr)
@@ -128,7 +182,7 @@ func TestGoxcel_GetCellValue(t *testing.T) {
 	type fields struct {
 		FileName string
 		Template string
-		file     *excelize.File
+		File     *excelize.File
 	}
 	type args struct {
 		sheet string
@@ -148,7 +202,7 @@ func TestGoxcel_GetCellValue(t *testing.T) {
 			g := &Goxcel{
 				FileName: tt.fields.FileName,
 				Template: tt.fields.Template,
-				file:     tt.fields.file,
+				File:     tt.fields.File,
 			}
 			got, err := g.GetCellValue(tt.args.sheet, tt.args.cell)
 			if (err != nil) != tt.wantErr {

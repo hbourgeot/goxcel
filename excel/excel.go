@@ -13,22 +13,22 @@ type Goxcel struct {
 	File     *excelize.File
 }
 
-func (g *Goxcel) Open() (*excelize.File, error) {
+func (g *Goxcel) Open() error {
 	file, err := excelize.OpenFile(g.FileName)
-	if err != nil {
-		return nil, err
-	}
-
-	return file, nil
-}
-
-func (g *Goxcel) CheckFile() error {
-	file, err := g.Open()
 	if err != nil {
 		return err
 	}
 
 	g.File = file
+	return nil
+}
+
+func (g *Goxcel) CheckFile() error {
+	err := g.Open()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -87,7 +87,12 @@ func (g *Goxcel) SetCellValue(sheet, cell, value string) error {
 		}
 	}
 
-	return g.File.SetCellValue(sheet, cell, value)
+	err := g.File.SetCellValue(sheet, cell, value)
+	if err != nil {
+		return err
+	}
+
+	return g.Save()
 }
 
 func (g *Goxcel) GetCellValue(sheet, cell string) (string, error) {

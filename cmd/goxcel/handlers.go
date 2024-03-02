@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"slices"
 	"strconv"
@@ -30,13 +31,11 @@ func (app *App) fillStructs(w http.ResponseWriter) {
 	}
 
 	// Open the file
-	file, err := app.g.Open()
+	err := app.g.Open()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	app.g.File = file
 }
 
 func (app *App) initGoxcel(w http.ResponseWriter, r *http.Request) {
@@ -46,34 +45,30 @@ func (app *App) initGoxcel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := chi.URLParam(r, "user")
-	if slices.Contains(app.users, user) {
-		app.CurrentUser = user
-	} else {
+	if !slices.Contains(app.users, user) {
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
 
-	// Create a new instance of Goxcel
+	// Crea una nueva instancia de Goxcel
 	app.g = &excel.Goxcel{
 		FileName: "gastos_ingresos_" + user + ".xlsx",
 		Template: "gastos_ingresos_template.xlsx",
 	}
 
+	// Copia la plantilla al nuevo archivo si es necesario
 	if err := app.g.CopyTemplate(); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Open the file
-	file, err := app.g.Open()
-	if err != nil {
+	// Abre el archivo
+	if err := app.g.Open(); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	app.g.File = file
-
-	// send a success message with status 200
+	// Envía un mensaje de éxito
 	w.WriteHeader(http.StatusCreated)
 	render.PlainText(w, r, "Goxcel initialized successfully!")
 }
@@ -86,15 +81,18 @@ func (app *App) appendDay(w http.ResponseWriter, r *http.Request) {
 	}
 
 	requestUser := chi.URLParam(r, "user")
+
 	if !slices.Contains(app.users, requestUser) {
 		render.Status(r, 404)
 		render.PlainText(w, r, "User not found")
 		return
-	} else if requestUser != app.CurrentUser && slices.Contains(app.users, app.CurrentUser) {
+	} else if requestUser != app.CurrentUser {
+		fmt.Println("Changing user")
 		app.CurrentUser = requestUser
-		if app.g != nil {
-			app.fillStructs(w)
-		}
+	}
+
+	if app.g == nil || app.g.File == nil {
+		app.fillStructs(w)
 	}
 
 	// gets gasto and ingreso from the request
@@ -200,58 +198,30 @@ func (app *App) getGastosIngresos(w http.ResponseWriter, r *http.Request) {
 		render.Status(r, 404)
 		render.PlainText(w, r, "User not found")
 		return
-	} else if requestUser != app.CurrentUser && slices.Contains(app.users, app.CurrentUser) {
+	} else if requestUser != app.CurrentUser {
 		app.CurrentUser = requestUser
-		if app.g == nil {
-			app.fillStructs(w)
-		}
 	}
 
-	// Get the current month
-	month := time.Now().Month().String()
-	monthDays := utils.GetMonthDays(month)
-
-	monthData := Month{
-		Month: month,
-		Days:  make([]Day, monthDays),
+	if app.g == nil || app.g.File == nil {
+		app.fillStructs(w)
 	}
 
-	// Get gastos and ingresos from the Meses sheet
-	gastos := 0
-	ingresos := 0
-	for i := 1; i <= monthDays; i++ {
-		cell := utils.GenerateCell(month, i, true)
-		cellValue, err := app.g.GetCellValue("Meses", cell)
-		if err != nil {
-			render.Status(r, 500)
-			render.PlainText(w, r, err.Error())
-			return
+	monthsData := []*Month{}
+	for _, month := range utils.Meses {
+		// Get the current month
+		monthDays := utils.GetMonthDays(month)
+
+		monthData := Month{
+			Month: month,
+			Days:  make([]Day, monthDays),
 		}
 
-		if cellValue != "" {
-			gasto, err := strconv.Atoi(cellValue)
-			if err != nil {
-				render.Status(r, 500)
-				render.PlainText(w, r, err.Error())
-				return
-			}
-
-			monthData.Days[i-1].Gastos = gasto
-			monthData.Days[i-1].Day = i
-
-			gastos += gasto
-		}
-
-		cell = utils.GenerateCell(month, i, false)
-		cellValue, err = app.g.GetCellValue("Meses", cell)
-		if err != nil {
-			render.Status(r, 500)
-			render.PlainText(w, r, err.Error())
-			return
-		}
-
-		if cellValue != "" {
-			ingreso, err := strconv.Atoi(cellValue)
+		// Get gastos and ingresos from the Meses sheet
+		gastos := 0
+		ingresos := 0
+		for i := 1; i <= monthDays; i++ {
+			cell := utils.GenerateCell(month, i, true)
+			cellValue, err := app.g.GetCellValue("Meses", cell)
 			if err != nil {
 				render.Status(r, 500)
 				render.PlainText(w, r, err.Error())
@@ -259,12 +229,43 @@ func (app *App) getGastosIngresos(w http.ResponseWriter, r *http.Request) {
 			}
 
 			monthData.Days[i-1].Day = i
-			monthData.Days[i-1].Ingresos = ingreso
-			ingresos += ingreso
-		}
-	}
+			if cellValue != "" {
+				gasto, err := strconv.Atoi(cellValue)
+				if err != nil {
+					render.Status(r, 500)
+					render.PlainText(w, r, err.Error())
+					return
+				}
 
+				monthData.Days[i-1].Gastos = gasto
+
+				gastos += gasto
+			}
+
+			cell = utils.GenerateCell(month, i, false)
+			cellValue, err = app.g.GetCellValue("Meses", cell)
+			if err != nil {
+				render.Status(r, 500)
+				render.PlainText(w, r, err.Error())
+				return
+			}
+
+			if cellValue != "" {
+				ingreso, err := strconv.Atoi(cellValue)
+				if err != nil {
+					render.Status(r, 500)
+					render.PlainText(w, r, err.Error())
+					return
+				}
+
+				monthData.Days[i-1].Ingresos = ingreso
+				ingresos += ingreso
+			}
+
+		}
+		monthsData = append(monthsData, &monthData)
+	}
 	// send a success message with status 200 with a json
 	render.Status(r, 200)
-	render.JSON(w, r, monthData)
+	render.JSON(w, r, monthsData)
 }

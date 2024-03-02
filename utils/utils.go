@@ -6,7 +6,7 @@ import (
 	"github.com/hbourgeot/goxcel/excel"
 )
 
-var Meses = []string{"Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"}
+var Meses = []string{"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"}
 
 func GetMonthDays(month string) int {
 	switch month {
