@@ -14,8 +14,8 @@ import (
 )
 
 type Month struct {
-	Month string
-	Days  []Day `json:"days"`
+	Month string `json:"month"`
+	Days  []Day  `json:"days"`
 }
 
 type Day struct {

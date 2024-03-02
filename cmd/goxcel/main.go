@@ -37,7 +37,7 @@ func NewRouter() *chi.Mux {
 
 func (app *App) Mount() {
 	app.Router.Use(middleware.Recoverer)
-	app.Router.Use(cors.Handler(cors.Options{AllowedOrigins: []string{"*"}, AllowCredentials: true}))
+	app.Router.Use(cors.Handler(cors.Options{AllowedOrigins: []string{"*"}, AllowCredentials: true, Debug: true, AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}}))
 	app.Router.Use(middleware.Logger)
 
 	app.Router.Post("/initGoxcel/{user}", app.initGoxcel)
