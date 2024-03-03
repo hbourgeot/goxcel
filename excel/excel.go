@@ -13,8 +13,7 @@ type Goxcel struct {
 	File     *excelize.File
 }
 
-// const dir = "/usr/local/bin/"
-const dir = ""
+const dir = "/usr/local/bin/"
 
 func (g *Goxcel) Open() error {
 	file, err := excelize.OpenFile(dir + g.FileName)

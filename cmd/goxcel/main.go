@@ -37,8 +37,7 @@ func (app *App) Mount() {
 	app.Router.Use(middleware.Recoverer)
 	app.Router.Use(middleware.Logger)
 
-	// workDir:= "/usr/local/bin"
-	workDir, _ := os.Getwd()
+	workDir:= "/usr/local/bin"
 	filesDir := http.Dir(filepath.Join(workDir, "frontend", "dist"))
 
 	app.Router.Route("/api", func(r chi.Router) {
