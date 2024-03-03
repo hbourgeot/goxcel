@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onBeforeMount } from 'vue';
+import { ref, onBeforeMount, watch } from 'vue';
 import InitialScreen from './components/InitialScreen.vue';
 import CalendarScreen from './components/CalendarScreen.vue';
 import { useLocalStorage } from './composables/localStorage';

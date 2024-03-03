@@ -91,6 +91,8 @@ const vCalendarSlots = computed(() => {
       ref="datePicker"
       v-bind="$attrs"
       v-model="modelValue"
+      locale="es-VE"
+      :masks="{title: 'MMM YYYY'}"
       :model-modifiers="modelModifiers"
       class="calendar"
       trim-weeks
@@ -120,7 +122,7 @@ const vCalendarSlots = computed(() => {
   @apply grid gap-4;
 }
 .calendar .vc-title {
-  @apply text-sm font-medium relative z-20;
+  @apply text-sm font-medium relative z-20 capitalize;
 }
 .vc-popover-content-wrapper .vc-popover-content {
   @apply mt-3 rounded-md max-w-xs border bg-background;
@@ -181,7 +183,7 @@ const vCalendarSlots = computed(() => {
   @apply text-muted-foreground opacity-50;
 }
 .calendar .vc-highlight-content-solid, .calendar .vc-highlight-content-outline {
-  @apply bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground;
+  @apply bg-destructive text-destructive-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground;
 }
 .calendar .vc-highlight-content-light {
   @apply bg-accent text-accent-foreground;

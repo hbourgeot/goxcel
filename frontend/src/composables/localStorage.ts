@@ -13,6 +13,12 @@ export function useLocalStorage(key: string, defaultValue: any) {
           newValue instanceof Map ? Object.fromEntries(newValue) : newValue
         )
       );
+
+      if (newValue.mode === "dark") {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
     },
     { deep: true }
   );
