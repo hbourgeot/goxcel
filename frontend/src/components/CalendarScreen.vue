@@ -3,7 +3,7 @@ import { Ref, ref, watch, watchEffect } from 'vue';
 import { Calendar } from '@/components/ui/calendar';
 import { useCalendarData } from '@/composables/calendarData';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import ModeSwitch from './ModeSwitch.vue';
+import ModeSwitch from './Dropdown.vue';
 import { Month } from "@/types";
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from './ui/dialog';
@@ -169,4 +169,4 @@ async function handleAdd() {
       </CardFooter>
     </Card>
   </div>
-</template>
+</template>./Dropdown.vue
