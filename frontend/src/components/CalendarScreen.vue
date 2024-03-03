@@ -9,10 +9,12 @@ import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from './ui/dialog';
 import { Input } from './ui/input';
 import { getLocalStorage } from '@/composables/localStorage';
+import { useToast } from './ui/toast';
 
 // Uso del composable para obtener los datos
 const { data, fetchData } = useCalendarData();
 const user = getLocalStorage('user');
+const { toast } = useToast();
 
 
 // ref constants
@@ -44,13 +46,6 @@ watchEffect(() => {
           key: `${month.month}-${day.day}`,
           dates: new Date(`${new Date().getFullYear()}-${month.month}-${day.day}`),
           highlight: true,
-          customData: {
-            gastos: day.gastos,
-            ingresos: day.ingresos
-          },
-          popover: {
-            label: `Gastos: ${day.gastos}, Ingresos: ${day.ingresos}`,
-          },
         }
       }
 
@@ -88,11 +83,23 @@ async function handleAdd() {
   const month = data.value.find((month: Month) => month.month === monthNames[monthSelected.value ?? 0]);
   const day = month?.days.find((day: any) => day.day === dateSelected.value.getDate());
 
-  const response = await fetch(`http://localhost:8080/appendDay/${user.name}/${month?.month}-${day?.day}/-${form.value.gastos}-${form.value.ingresos}`, {
+  const response = await fetch(`/api/appendDay/${user.name}/${month?.month}-${day?.day}/-${form.value.gastos}-${form.value.ingresos}`, {
     method: 'POST'
   });
 
-  const text = await response.text();
+  if ([200, 201].includes(response.status)) {
+    toast({
+      title: '¡Listo!',
+      description: "Se han agregado los gastos e ingresos correctamente",
+    })
+    fetchData();
+  } else {
+    toast({
+      title: 'Error',
+      description: "Hubo un error al agregar los gastos e ingresos",
+      variant: 'destructive'
+    })
+  }
 
   form.value.gastos = 0;
   form.value.ingresos = 0;

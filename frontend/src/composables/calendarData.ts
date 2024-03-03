@@ -9,7 +9,7 @@ export function useCalendarData() {
 
   async function fetchData() {
     try {
-      const response = await fetch(`http://localhost:8080/getGasIng/${user.name}`);
+      const response = await fetch(`/api/getGasIng/${user.name}`);
       const jsonData: Month[] = await response.json();
       data.value = jsonData;
     } catch (error) {

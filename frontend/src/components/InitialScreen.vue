@@ -29,7 +29,7 @@ const show = ref(props.show);
 const user = useLocalStorage('user', { name: "", mode: "light" });
 
 const init = async () => {
-  const response = await fetch(`http://localhost:8080/initGoxcel/${user.name}`, {
+  const response = await fetch(`/api/initGoxcel/${user.name}`, {
     method: 'POST'
   });
 
