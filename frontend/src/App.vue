@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, onBeforeMount, watch } from 'vue';
+import { ref, onBeforeMount } from 'vue';
 import InitialScreen from './components/InitialScreen.vue';
 import CalendarScreen from './components/CalendarScreen.vue';
 import { useLocalStorage } from './composables/localStorage';
+import Toaster from '@/components/ui/toast/Toaster.vue'
 
 const user = useLocalStorage('user', { name: "", mode: "light" });
-const showInitialScreen = ref(user.name === '');
+const initialScreen = ref({open:user.name === ''});
 
 onBeforeMount(() => {
   if (user.mode === 'dark') {
@@ -14,10 +15,12 @@ onBeforeMount(() => {
     document.documentElement.classList.remove('dark');
   }
 })
+
 </script>
 
 <template>
-  <InitialScreen v-if="showInitialScreen" :show="showInitialScreen" />
+  <InitialScreen v-if="initialScreen.open" v-model:show="initialScreen.open"/>
   <CalendarScreen v-else />
+  <Toaster />
 </template>
 
