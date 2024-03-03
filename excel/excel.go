@@ -51,6 +51,10 @@ func (g *Goxcel) SaveAs(filename string) error {
 }
 
 func (g *Goxcel) CopyTemplate() error {
+	if _, err := os.Stat(g.FileName); err == nil {
+		// El archivo ya existe, no hacer nada y no devolver error
+		return nil
+	} 
 	// Abre el archivo de plantilla original
 	sourceFile, err := os.Open(g.Template)
 	if err != nil {
