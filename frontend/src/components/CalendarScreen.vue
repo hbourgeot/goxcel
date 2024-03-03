@@ -2,12 +2,17 @@
 import { Ref, ref, watch, watchEffect } from 'vue';
 import { Calendar } from '@/components/ui/calendar';
 import { useCalendarData } from '@/composables/calendarData';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import ModeSwitch from './ModeSwitch.vue';
 import { Month } from "@/types";
+import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from './ui/dialog';
+import { Input } from './ui/input';
+import { getLocalStorage } from '@/composables/localStorage';
 
 // Uso del composable para obtener los datos
-const { data } = useCalendarData();
+const { data, fetchData } = useCalendarData();
+const user = getLocalStorage('user');
 
 
 // ref constants
@@ -19,6 +24,8 @@ const form = ref({
   gastos: 0,
   ingresos: 0
 });
+const gastos = ref(0);
+const ingresos = ref(0);
 
 // normal constants
 const monthDisplayNames = [
@@ -53,29 +60,53 @@ watchEffect(() => {
       }
     })
   );
+
+  if (daySelected.value) {
+    const month = data.value.find((month: Month) => month.month === monthNames[monthSelected.value ?? 0]);
+    const day = month?.days.find((day: any) => day.day === dateSelected.value.getDate());
+
+    gastos.value = day?.gastos ?? 0;
+    ingresos.value = day?.ingresos ?? 0;
+  }
 });
 
 watch(dateSelected, (newDate) => {
-  console.log(newDate);
   if (newDate) {
     daySelected.value = newDate.getDate();
     monthSelected.value = newDate.getMonth();
 
     const month = data.value.find((month: Month) => month.month === monthNames[newDate.getMonth()]);
-    const day = month.days.find((day: any) => day.day === newDate.getDate());
+    const day = month?.days.find((day: any) => day.day === newDate.getDate());
 
-    form.value.gastos = day.gastos;
-    form.value.ingresos = day.ingresos;
+    gastos.value = day?.gastos ?? 0;
+    ingresos.value = day?.ingresos ?? 0;
 
   }
 });
+
+async function handleAdd() {
+  const month = data.value.find((month: Month) => month.month === monthNames[monthSelected.value ?? 0]);
+  const day = month?.days.find((day: any) => day.day === dateSelected.value.getDate());
+
+  const response = await fetch(`http://localhost:8080/appendDay/${user.name}/${month?.month}-${day?.day}/-${form.value.gastos}-${form.value.ingresos}`, {
+    method: 'POST'
+  });
+
+  const text = await response.text();
+
+  form.value.gastos = 0;
+  form.value.ingresos = 0;
+  await fetchData();
+}
 </script>
 
 <template>
   <div class="w-full p-4 flex justify-center gap-2 items-center flex-col">
     <Card class="bg-[#031030] p-1">
       <CardHeader>
-        <CardTitle class="flex justify-between items-center">Seleccionar día <ModeSwitch/> </CardTitle>
+        <CardTitle class="flex justify-between items-center">Seleccionar día
+          <ModeSwitch />
+        </CardTitle>
         <CardDescription>Selecciona un día para ingresar los gastos e ingresos</CardDescription>
       </CardHeader>
       <CardContent>
@@ -83,15 +114,52 @@ watch(dateSelected, (newDate) => {
           :max-date="new Date(2024, 11, 31)" locale="es_ES" v-model="dateSelected" />
       </CardContent>
     </Card>
-    <Card class="bg-[#031030] p-1 mt-4 w-full" v-show="dateSelected">
+    <Card class="bg-[#031030] p-1 mt-4 w-full" v-show="daySelected">
       <CardHeader>
-        <CardTitle>{{ daySelected == 1 ? '1ero' : daySelected }} de {{ monthDisplayNames[monthSelected ?? 0] }}</CardTitle>
+        <CardTitle>{{ daySelected == 1 ? '1ero' : daySelected }} de {{ monthDisplayNames[monthSelected ?? 0] }}
+        </CardTitle>
         <CardDescription>Resumen de los gastos e ingresos del mes</CardDescription>
       </CardHeader>
       <CardContent>
-        <p class="text-white">Gastos: {{ form.gastos }}$</p>
-        <p class="text-white">Ingresos: {{ form.ingresos }}$</p>
+        <p class="text-white">Gastos: {{ gastos }}$</p>
+        <p class="text-white">Ingresos: {{ ingresos }}$</p>
       </CardContent>
+      <CardFooter>
+        <Dialog>
+          <DialogTrigger class="w-full">
+            <Button variant="outline" class="p-2 rounded-md w-full hover:bg-white hover:text-black">Agregar
+              Gastos/Ingresos</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Agregar</DialogTitle>
+              <DialogDescription>
+                Agrega nuevos gastos e ingresos para el día seleccionado, estos se sumarán a los ya existentes
+              </DialogDescription>
+            </DialogHeader>
+            <div class="flex flex-col gap-2">
+              <label for="gastos" class="text-white">Gastos</label>
+              <Input type="number" v-model="form.gastos" />
+            </div>
+            <div class="flex flex-col gap-2">
+              <label for="ingresos" class="text-white">Ingresos</label>
+              <Input type="number" v-model="form.ingresos" />
+            </div>
+
+            <DialogFooter>
+              <div class="flex gap-x-3 justify-between flex-nowrap">
+                <DialogClose as-child class="w-1/2">
+                  <Button variant="ghost"
+                    class="p-2 rounded-md w-full">Cancelar</Button>
+                </DialogClose>
+                <DialogClose as-child class="w-1/2">
+                  <Button @click="handleAdd" variant="secondary" class="p-2 rounded-md w-full">Agregar</Button>
+                </DialogClose>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </CardFooter>
     </Card>
   </div>
 </template>

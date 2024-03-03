@@ -20,5 +20,5 @@ export function useCalendarData() {
 
   onBeforeMount(fetchData);
 
-  return { data };
+  return { data, fetchData };
 }

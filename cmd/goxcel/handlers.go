@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"slices"
 	"strconv"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -95,6 +94,14 @@ func (app *App) appendDay(w http.ResponseWriter, r *http.Request) {
 		app.fillStructs(w)
 	}
 
+	month := chi.URLParam(r, "month")
+	day, err := strconv.Atoi(chi.URLParam(r, "day"))
+	if err != nil {
+		render.Status(r, 400)
+		render.PlainText(w, r, "Bad request: day must be a number")
+		return
+	}
+
 	// gets gasto and ingreso from the request
 	gasto := chi.URLParam(r, "gasto")
 	ingreso := chi.URLParam(r, "ingreso")
@@ -103,10 +110,6 @@ func (app *App) appendDay(w http.ResponseWriter, r *http.Request) {
 		render.PlainText(w, r, "Bad request: gasto and ingreso are required")
 		return
 	}
-
-	// Get the current day
-	day := time.Now().Day()
-	month := time.Now().Month().String()
 
 	// Set gasto in Meses sheet
 	cell := utils.GenerateCell(month, day, true)

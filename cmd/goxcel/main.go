@@ -41,6 +41,6 @@ func (app *App) Mount() {
 	app.Router.Use(middleware.Logger)
 
 	app.Router.Post("/initGoxcel/{user}", app.initGoxcel)
-	app.Router.Post("/appendDay/{user}-{gasto}-{ingreso}", app.appendDay)
+	app.Router.Post("/appendDay/{user}/{month}-{day}/-{gasto}-{ingreso}", app.appendDay)
 	app.Router.Get("/getGasIng/{user}", app.getGastosIngresos)
 }
