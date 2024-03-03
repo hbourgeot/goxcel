@@ -9,12 +9,21 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
 import { useLocalStorage } from '../composables/localStorage';
+import { useToast } from './ui/toast';
+
+const {toast} = useToast();
 
 const props = defineProps<{
   show: boolean;
 }>();
+
+const emit = defineEmits(['update:show']);
+
+function close() {
+  emit('update:show', false);
+}
 
 const show = ref(props.show);
 const user = useLocalStorage('user', { name: "", mode: "light" });
@@ -23,6 +32,20 @@ const init = async () => {
   const response = await fetch(`http://localhost:8080/initGoxcel/${user.name}`, {
     method: 'POST'
   });
+
+  if ([200, 201].includes(response.status)) {
+    close();
+    toast({
+      title: '¡Bienvenido!',
+      description: "Iniciaste sesión correctamente",
+    })
+  } else {
+    toast({
+      title: 'Error',
+      description: "Hubo un error al iniciar sesión",
+      variant: 'destructive'
+    })
+  }
 
   show.value = false;
 };
