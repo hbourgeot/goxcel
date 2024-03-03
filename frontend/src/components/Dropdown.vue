@@ -15,10 +15,6 @@
           <DropdownMenuItem @click="setTheme('dark')">Oscuro</DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <!-- cargar excel (usar icono de carga de documentos) -->
-        <DropdownMenuItem @click="loadFile" class="flex gap-x-2 justify-between w-full flex-row-reverse">
-          <UploadCloud class="h-[1.2rem] w-[1.2rem] dark:text-white text-black" /> Cargar Excel
-        </DropdownMenuItem>
         <DropdownMenuItem @click="downloadFile" class="flex gap-x-2 justify-between w-full flex-row-reverse">
           <DownloadCloud class="h-[1.2rem] w-[1.2rem] dark:text-white text-black" />
           Descargar Excel
@@ -31,15 +27,14 @@
 
       </DropdownMenuContent>
     </DropdownMenu>
-    <input type="file" id="file" ref="file" accept=".xlsx" class="hidden" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { Ref, ref } from 'vue';
+import { ref } from 'vue';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuGroup, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { DownloadCloud, Menu, UploadCloud } from 'lucide-vue-next';
+import { DownloadCloud, Menu } from 'lucide-vue-next';
 import { useLocalStorage } from '@/composables/localStorage';
 import { useToast } from './ui/toast';
 
@@ -47,7 +42,6 @@ const user = useLocalStorage('user', { name: '', mode: 'light' });
 const { toast } = useToast();
 
 const open = ref(false);
-const file: Ref<HTMLInputElement | null> = ref(null);
 const setTheme = (theme: string) => {
   user.mode = theme;
 };
@@ -55,36 +49,6 @@ const setTheme = (theme: string) => {
 const reload = () => {
   localStorage.clear();
   window.location.reload();
-};
-
-const loadFile = async () => {
-  await file!.value!.click();
-
-  const formData = new FormData();
-  formData.append('file', file!.value!.files![0]);
-
-  const response = await fetch(`/api/uploadFile/${user.name}`, {
-    method: 'POST',
-    body: formData,
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-
-  if (response.ok) {
-    const data = await response.text();
-    console.log(data);
-    toast({
-      title: 'Archivo cargado',
-      description: 'El archivo se ha cargado correctamente',
-    });
-  } else {
-    toast({
-      title: 'Error al cargar el archivo',
-      description: 'Ocurrió un error al cargar el archivo',
-      variant: 'destructive'
-    });
-  }
 };
 
 const downloadFile = async () => {

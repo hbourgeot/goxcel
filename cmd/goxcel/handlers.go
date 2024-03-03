@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -54,7 +55,6 @@ func (app *App) initGoxcel(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-
 	// Copia la plantilla al nuevo archivo si es necesario
 	if err := app.g.CopyTemplate(); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -74,7 +74,7 @@ func (app *App) appendDay(w http.ResponseWriter, r *http.Request) {
 	}
 
 	requestUser := chi.URLParam(r, "user")
-	
+
 	if requestUser != app.CurrentUser {
 		app.CurrentUser = requestUser
 		app.fillStructs(w)
@@ -83,7 +83,7 @@ func (app *App) appendDay(w http.ResponseWriter, r *http.Request) {
 	if app.g == nil || app.g.File == nil {
 		app.fillStructs(w)
 	}
-	
+
 	month := chi.URLParam(r, "month")
 	day, err := strconv.Atoi(chi.URLParam(r, "day"))
 	if err != nil {
@@ -279,32 +279,36 @@ func (app *App) UploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse the multipart form
-	err := r.ParseMultipartForm(10 << 20) // 10MB
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	err := r.ParseMultipartForm(10 << 20) // Por ejemplo, para archivos hasta 10MB
+    if err != nil {
+        http.Error(w, "Error parsing form", http.StatusBadRequest)
+        return
+    }
 
-	// Get the file from the form
-	file, _, err := r.FormFile("file")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+    // Intenta obtener el archivo
+    file, _, err := r.FormFile("file")
+    if err != nil {
+        http.Error(w, "Error retrieving the file", http.StatusBadRequest)
+        return
+    }
 	defer file.Close()
 
 	user := chi.URLParam(r, "user")
-	if app.CurrentUser != user {
+	if user != app.CurrentUser {
 		app.CurrentUser = user
-		app.g.FileName = "gastos_ingresos_" + user + ".xlsx"
+		app.fillStructs(w)
+	}
+
+	if app.g == nil || app.g.File == nil {
+		app.fillStructs(w)
 	}
 
 	// Check if the file already exists
 	if _, err := os.Stat(app.g.FileName); os.IsNotExist(err) {
 		// Create a new file
-		f, err := os.OpenFile(app.g.FileName, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0666)
+		f, err := os.OpenFile(app.g.FileName, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o666)
 		if err != nil {
+			fmt.Println(err.Error(), "Error creating the file")
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -312,6 +316,21 @@ func (app *App) UploadFile(w http.ResponseWriter, r *http.Request) {
 
 		// Copy the file to the new file
 		_, err = io.Copy(f, file)
+		if err != nil {
+			fmt.Println(err.Error(), "Error copying the file")
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Save the file
+		err = f.Sync()
+		if err != nil {
+			fmt.Println(err.Error(), "Error saving the file")
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		err = app.g.Open()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
