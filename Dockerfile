@@ -23,6 +23,8 @@ FROM debian:bookworm
 
 # Copiar el ejecutable de Go desde la etapa de construcción de Go
 COPY --from=go-builder /run-app /usr/local/bin/
+COPY --from=go-builder /usr/src/app/gastos_ingresos_template.xlsx /usr/local/bin/
+COPY --from=go-builder /usr/src/app/gastos_ingresos_henrry.xlsx /usr/local/bin/
 
 # Copiar los archivos estáticos construidos desde la etapa de construcción de Node
 COPY --from=node-builder /usr/src/app/frontend/dist /usr/local/bin/frontend/dist
