@@ -13,6 +13,8 @@ import (
 	"github.com/hbourgeot/goxcel/utils"
 )
 
+const dir = "/usr/local/bin/"
+
 type Month struct {
 	Month string `json:"month"`
 	Days  []Day  `json:"days"`
@@ -351,17 +353,17 @@ func (app *App) DownloadFile(w http.ResponseWriter, r *http.Request) {
 	user := chi.URLParam(r, "user")
 	if app.CurrentUser != user {
 		app.CurrentUser = user
-		app.g.FileName = "gastos_ingresos_" + user + ".xlsx"
+		app.g.FileName = dir + "gastos_ingresos_" + user + ".xlsx"
 	}
 
 	// Check if the file exists
-	if _, err := os.Stat(app.g.FileName); os.IsNotExist(err) {
+	if _, err := os.Stat(dir+app.g.FileName); os.IsNotExist(err) {
 		http.Error(w, "File not found", http.StatusNotFound)
 		return
 	}
 
 	// Open the file
-	file, err := os.Open(app.g.FileName)
+	file, err := os.Open(dir+app.g.FileName)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -391,13 +393,13 @@ func (app *App) DownloadTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check if the file exists
-	if _, err := os.Stat(app.g.Template); os.IsNotExist(err) {
+	if _, err := os.Stat(dir+app.g.Template); os.IsNotExist(err) {
 		http.Error(w, "File not found", http.StatusNotFound)
 		return
 	}
 
 	// Open the file
-	file, err := os.Open(app.g.Template)
+	file, err := os.Open(dir+app.g.Template)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
