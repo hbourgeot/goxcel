@@ -13,10 +13,11 @@ type Goxcel struct {
 	File     *excelize.File
 }
 
-const dir = "/usr/local/bin"
+// const dir = "/usr/local/bin/"
+const dir = ""
 
 func (g *Goxcel) Open() error {
-	file, err := excelize.OpenFile(dir + "/" + g.FileName)
+	file, err := excelize.OpenFile(dir + g.FileName)
 	if err != nil {
 		return err
 	}
@@ -53,19 +54,19 @@ func (g *Goxcel) SaveAs(filename string) error {
 }
 
 func (g *Goxcel) CopyTemplate() error {
-	if _, err := os.Stat(dir + "/" + g.FileName); err == nil {
+	if _, err := os.Stat(dir + g.FileName); err == nil {
 		// El archivo ya existe, no hacer nada y no devolver error
 		return nil
 	} 
 	// Abre el archivo de plantilla original
-	sourceFile, err := os.Open(dir + "/" + g.Template)
+	sourceFile, err := os.Open(dir + g.Template)
 	if err != nil {
 		return err
 	}
 	defer sourceFile.Close()
 
 	// Crea un nuevo archivo para la copia
-	destinationFile, err := os.Create(dir + "/" + g.FileName) // g.FileName será el nombre del nuevo archivo
+	destinationFile, err := os.Create(dir + g.FileName) // g.FileName será el nombre del nuevo archivo
 	if err != nil {
 		return err
 	}
@@ -86,7 +87,7 @@ func (g *Goxcel) CopyTemplate() error {
 	return nil
 }
 
-func (g *Goxcel) SetCellValue(sheet, cell, value string) error {
+func (g *Goxcel) SetCellValue(sheet, cell string, value int) error {
 	if g.File == nil {
 		if err := g.CheckFile(); err != nil {
 			return err

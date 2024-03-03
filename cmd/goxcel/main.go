@@ -45,6 +45,9 @@ func (app *App) Mount() {
 		r.Post("/initGoxcel/{user}", app.initGoxcel)
 		r.Post("/appendDay/{user}/{month}-{day}/-{gasto}-{ingreso}", app.appendDay)
 		r.Get("/getGasIng/{user}", app.getGastosIngresos)
+		r.Get("/downloadFile/{user}", app.DownloadFile)
+		r.Get("/downloadTemplate/{user}", app.DownloadTemplate)
+		r.Post("/uploadFile/{user}", app.UploadFile)
 	})
 	app.Router.Get("/*", func(w http.ResponseWriter, r *http.Request) {
 		if _, err := os.Stat(filepath.Join(string(filesDir), r.URL.Path)); os.IsNotExist(err) {

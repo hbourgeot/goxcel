@@ -46,23 +46,17 @@ func (app *App) initGoxcel(w http.ResponseWriter, r *http.Request) {
 	user := chi.URLParam(r, "user")
 	if app.CurrentUser != user {
 		app.CurrentUser = user
-		app.g.FileName = "gastos_ingresos_" + user + ".xlsx"
+
+		// Crea una nueva instancia de Goxcel
+		app.g = &excel.Goxcel{
+			FileName: "gastos_ingresos_" + user + ".xlsx",
+			Template: "gastos_ingresos_template.xlsx",
+		}
 	}
 
-	// Crea una nueva instancia de Goxcel
-	app.g = &excel.Goxcel{
-		FileName: "gastos_ingresos_" + user + ".xlsx",
-		Template: "gastos_ingresos_template.xlsx",
-	}
 
 	// Copia la plantilla al nuevo archivo si es necesario
 	if err := app.g.CopyTemplate(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Abre el archivo
-	if err := app.g.Open(); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -81,13 +75,13 @@ func (app *App) appendDay(w http.ResponseWriter, r *http.Request) {
 
 	requestUser := chi.URLParam(r, "user")
 	
-	if app.g == nil || app.g.File == nil {
+	if requestUser != app.CurrentUser {
+		app.CurrentUser = requestUser
 		app.fillStructs(w)
 	}
 
-	if requestUser != app.CurrentUser {
-		app.CurrentUser = requestUser
-		app.g.FileName = "gastos_ingresos_" + requestUser + ".xlsx"
+	if app.g == nil || app.g.File == nil {
+		app.fillStructs(w)
 	}
 	
 	month := chi.URLParam(r, "month")
@@ -117,8 +111,15 @@ func (app *App) appendDay(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	value := 0
+
 	if cellValue == "" {
-		cellValue = gasto
+		value, err = strconv.Atoi(gasto)
+		if err != nil {
+			render.Status(r, 500)
+			render.PlainText(w, r, err.Error())
+			return
+		}
 	} else {
 		gastoInt, err := strconv.Atoi(gasto)
 		if err != nil {
@@ -127,17 +128,17 @@ func (app *App) appendDay(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		cellValueInt, err := strconv.Atoi(cellValue)
+		value, err = strconv.Atoi(cellValue)
 		if err != nil {
 			render.Status(r, 500)
 			render.PlainText(w, r, err.Error())
 			return
 		}
 
-		cellValue = strconv.Itoa(gastoInt + cellValueInt)
+		value += gastoInt
 	}
 
-	err = app.g.SetCellValue("Meses", cell, cellValue)
+	err = app.g.SetCellValue("Meses", cell, value)
 	if err != nil {
 		render.Status(r, 500)
 		render.PlainText(w, r, err.Error())
@@ -155,7 +156,12 @@ func (app *App) appendDay(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if cellValue == "" {
-		cellValue = ingreso
+		value, err = strconv.Atoi(ingreso)
+		if err != nil {
+			render.Status(r, 500)
+			render.PlainText(w, r, err.Error())
+			return
+		}
 	} else {
 		ingresoInt, err := strconv.Atoi(ingreso)
 		if err != nil {
@@ -164,17 +170,17 @@ func (app *App) appendDay(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		cellValueInt, err := strconv.Atoi(cellValue)
+		value, err = strconv.Atoi(cellValue)
 		if err != nil {
 			render.Status(r, 500)
 			render.PlainText(w, r, err.Error())
 			return
 		}
 
-		cellValue = strconv.Itoa(ingresoInt + cellValueInt)
+		value += ingresoInt
 	}
 
-	err = app.g.SetCellValue("Meses", cell, cellValue)
+	err = app.g.SetCellValue("Meses", cell, value)
 	if err != nil {
 		render.Status(r, 500)
 		render.PlainText(w, r, err.Error())
@@ -194,13 +200,13 @@ func (app *App) getGastosIngresos(w http.ResponseWriter, r *http.Request) {
 
 	requestUser := chi.URLParam(r, "user")
 
-	if app.g == nil || app.g.File == nil {
+	if requestUser != app.CurrentUser {
+		app.CurrentUser = requestUser
 		app.fillStructs(w)
 	}
 
-	if requestUser != app.CurrentUser {
-		app.CurrentUser = requestUser
-		app.g.FileName = "gastos_ingresos_" + requestUser + ".xlsx"
+	if app.g == nil || app.g.File == nil {
+		app.fillStructs(w)
 	}
 
 	monthsData := []*Month{}
