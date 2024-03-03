@@ -18,11 +18,8 @@ type App struct {
 	g           *excel.Goxcel
 }
 
-var users = []string{"henrry", "hilda"}
-
 func main() {
 	app := &App{
-		users:  users,
 		Router: NewRouter(),
 	}
 
@@ -40,7 +37,8 @@ func (app *App) Mount() {
 	app.Router.Use(middleware.Recoverer)
 	app.Router.Use(middleware.Logger)
 
-	workDir:= "/usr/local/bin"
+	// workDir:= "/usr/local/bin"
+	workDir, _ := os.Getwd()
 	filesDir := http.Dir(filepath.Join(workDir, "frontend", "dist"))
 
 	app.Router.Route("/api", func(r chi.Router) {

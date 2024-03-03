@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
+	"io"
 	"net/http"
-	"slices"
+	"os"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
@@ -44,9 +44,9 @@ func (app *App) initGoxcel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := chi.URLParam(r, "user")
-	if !slices.Contains(app.users, user) {
-		http.Error(w, "User not found", http.StatusNotFound)
-		return
+	if app.CurrentUser != user {
+		app.CurrentUser = user
+		app.g.FileName = "gastos_ingresos_" + user + ".xlsx"
 	}
 
 	// Crea una nueva instancia de Goxcel
@@ -80,20 +80,16 @@ func (app *App) appendDay(w http.ResponseWriter, r *http.Request) {
 	}
 
 	requestUser := chi.URLParam(r, "user")
-
-	if !slices.Contains(app.users, requestUser) {
-		render.Status(r, 404)
-		render.PlainText(w, r, "User not found")
-		return
-	} else if requestUser != app.CurrentUser {
-		fmt.Println("Changing user")
-		app.CurrentUser = requestUser
-	}
-
+	
 	if app.g == nil || app.g.File == nil {
 		app.fillStructs(w)
 	}
 
+	if requestUser != app.CurrentUser {
+		app.CurrentUser = requestUser
+		app.g.FileName = "gastos_ingresos_" + requestUser + ".xlsx"
+	}
+	
 	month := chi.URLParam(r, "month")
 	day, err := strconv.Atoi(chi.URLParam(r, "day"))
 	if err != nil {
@@ -197,16 +193,14 @@ func (app *App) getGastosIngresos(w http.ResponseWriter, r *http.Request) {
 	}
 
 	requestUser := chi.URLParam(r, "user")
-	if !slices.Contains(app.users, requestUser) {
-		render.Status(r, 404)
-		render.PlainText(w, r, "User not found")
-		return
-	} else if requestUser != app.CurrentUser {
-		app.CurrentUser = requestUser
-	}
 
 	if app.g == nil || app.g.File == nil {
 		app.fillStructs(w)
+	}
+
+	if requestUser != app.CurrentUser {
+		app.CurrentUser = requestUser
+		app.g.FileName = "gastos_ingresos_" + requestUser + ".xlsx"
 	}
 
 	monthsData := []*Month{}
@@ -271,4 +265,132 @@ func (app *App) getGastosIngresos(w http.ResponseWriter, r *http.Request) {
 	// send a success message with status 200 with a json
 	render.Status(r, 200)
 	render.JSON(w, r, monthsData)
+}
+
+func (app *App) UploadFile(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse the multipart form
+	err := r.ParseMultipartForm(10 << 20) // 10MB
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Get the file from the form
+	file, _, err := r.FormFile("file")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
+
+	user := chi.URLParam(r, "user")
+	if app.CurrentUser != user {
+		app.CurrentUser = user
+		app.g.FileName = "gastos_ingresos_" + user + ".xlsx"
+	}
+
+	// Check if the file already exists
+	if _, err := os.Stat(app.g.FileName); os.IsNotExist(err) {
+		// Create a new file
+		f, err := os.OpenFile(app.g.FileName, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0666)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer f.Close()
+
+		// Copy the file to the new file
+		_, err = io.Copy(f, file)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// Send a success message
+	w.WriteHeader(http.StatusCreated)
+	render.PlainText(w, r, "File uploaded successfully!")
+}
+
+func (app *App) DownloadFile(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	user := chi.URLParam(r, "user")
+	if app.CurrentUser != user {
+		app.CurrentUser = user
+		app.g.FileName = "gastos_ingresos_" + user + ".xlsx"
+	}
+
+	// Check if the file exists
+	if _, err := os.Stat(app.g.FileName); os.IsNotExist(err) {
+		http.Error(w, "File not found", http.StatusNotFound)
+		return
+	}
+
+	// Open the file
+	file, err := os.Open(app.g.FileName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
+
+	// Get the file info
+	fileInfo, err := file.Stat()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Set the headers
+	w.Header().Set("Content-Disposition", "attachment; filename="+app.g.FileName)
+	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	w.Header().Set("Content-Length", strconv.FormatInt(fileInfo.Size(), 10))
+
+	// Send the file
+	http.ServeContent(w, r, app.g.FileName, fileInfo.ModTime(), file)
+}
+
+func (app *App) DownloadTemplate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Check if the file exists
+	if _, err := os.Stat(app.g.Template); os.IsNotExist(err) {
+		http.Error(w, "File not found", http.StatusNotFound)
+		return
+	}
+
+	// Open the file
+	file, err := os.Open(app.g.Template)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
+
+	// Get the file info
+	fileInfo, err := file.Stat()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Set the headers
+	w.Header().Set("Content-Disposition", "attachment; filename="+app.g.Template)
+	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	w.Header().Set("Content-Length", strconv.FormatInt(fileInfo.Size(), 10))
+
+	// Send the file
+	http.ServeContent(w, r, app.g.Template, fileInfo.ModTime(), file)
 }
